@@ -170,6 +170,111 @@ EXPOSE 3002
 CMD ["node", "dist/standalone.mjs"]
 ```
 
+## 📋 日志
+
+日志文件默认输出到项目根目录的 `logs/` 文件夹：
+
+```
+logs/
+├── gsuid-adapter-2024-09-15.log
+├── gsuid-adapter-2024-09-16.log
+└── gsuid-adapter-2024-09-17.log
+```
+
+- **滚动策略**：按日期滚动，每天一个文件
+- **保留天数**：自动清理 2 天前的日志
+- **控制台输出**：同时输出到 stdout/stderr
+
+## 🐧 使用 systemctl 后台运行
+
+### 1. 创建服务文件
+
+```bash
+sudo nano /etc/systemd/system/gsuid-adapter.service
+```
+
+### 2. 填入以下内容
+
+```ini
+[Unit]
+Description=GScore Adapter Standalone
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/gsuid-adapter-standalone
+ExecStart=/usr/bin/node dist/standalone.mjs
+Restart=always
+RestartSec=5
+
+# 日志配置
+StandardOutput=append:/opt/gsuid-adapter-standalone/logs/gsuid-adapter.log
+StandardError=append:/opt/gsuid-adapter-standalone/logs/gsuid-adapter-error.log
+
+# 环境变量（可选）
+# Environment=NODE_ENV=production
+
+[Install]
+WantedBy=multi-user.target
+```
+
+### 3. 修改权限并启用服务
+
+```bash
+# 赋予执行权限
+chmod +x /opt/gsuid-adapter-standalone/dist/standalone.mjs
+
+# 重新加载 systemd
+sudo systemctl daemon-reload
+
+# 启用开机自启
+sudo systemctl enable gsuid-adapter
+
+# 启动服务
+sudo systemctl start gsuid-adapter
+```
+
+### 4. 常用命令
+
+```bash
+# 查看状态
+sudo systemctl status gsuid-adapter
+
+# 查看日志
+sudo journalctl -u gsuid-adapter -f
+
+# 重启服务
+sudo systemctl restart gsuid-adapter
+
+# 停止服务
+sudo systemctl stop gsuid-adapter
+
+# 禁用开机自启
+sudo systemctl disable gsuid-adapter
+```
+
+### 5. 日志轮转（可选）
+
+如果需要更灵活的日志轮转，可以使用 `logrotate`：
+
+```bash
+sudo nano /etc/logrotate.d/gsuid-adapter
+```
+
+```conf
+/opt/gsuid-adapter-standalone/logs/*.log {
+    daily
+    rotate 2
+    compress
+    delaycompress
+    missingok
+    notifempty
+    postrotate
+        systemctl reload gsuid-adapter > /dev/null 2>&1 || true
+    endscript
+}
+```
+
 ## 📄 License
 
 MIT License

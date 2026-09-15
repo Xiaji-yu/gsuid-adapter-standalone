@@ -22,6 +22,8 @@ import { GScoreService } from './services/gscore-service';
 import { WsServer, NapCatAdapter, SnowLumaAdapter, GenericOB11Adapter } from './adapter';
 import type { MessageEnvelope, MetaEnvelope } from './types/message-envelope';
 import { ActionDispatcher } from './action-dispatcher';
+import { FileLogger } from './utils/file-logger';
+import { ActionDispatcher } from './action-dispatcher';
 
 // ==================== CLI 参数解析 ====================
 
@@ -48,11 +50,19 @@ function parseArgs(): { configPath: string; port: number; verbose: boolean } {
 // ==================== 日志器 ====================
 
 function createLogger(verbose: boolean): PluginLogger {
+  const fileLogger = new FileLogger({
+    dir: 'logs',
+    prefix: 'gsuid-adapter',
+    retentionDays: 2,
+    console: true,
+  });
+  fileLogger.init();
+
   return {
-    debug: (...args: unknown[]) => verbose && console.log('[DEBUG]', ...args),
-    info: (...args: unknown[]) => console.log('[INFO]', ...args),
-    warn: (...args: unknown[]) => console.warn('[WARN]', ...args),
-    error: (...args: unknown[]) => console.error('[ERROR]', ...args),
+    debug: (...args: unknown[]) => { if (verbose) fileLogger.debug(...args); },
+    info: (...args: unknown[]) => fileLogger.info(...args),
+    warn: (...args: unknown[]) => fileLogger.warn(...args),
+    error: (...args: unknown[]) => fileLogger.error(...args),
   };
 }
 
