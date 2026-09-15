@@ -157,17 +157,120 @@ connection:
 
 ## 🐳 Docker 部署
 
+### 方式一：Docker Compose（推荐）
+
+在项目根目录创建 `docker-compose.yml`：
+
+```yaml
+version: '3.8'
+
+services:
+  gsuid-adapter:
+    build: .
+    container_name: gsuid-adapter
+    restart: always
+    ports:
+      - "3002:3002"  # 反向 WS 监听端口
+    volumes:
+      - ./config.json:/app/config.json  # 配置文件
+      - ./logs:/app/logs                # 日志目录
+    environment:
+      - NODE_ENV=production
+    networks:
+      - gscore-network
+
+networks:
+  gscore-network:
+    external: true  # 如果已有网络，设为 external；否则删除这行让 compose 自动创建
+```
+
+### 方式二：Dockerfile
+
+如果需要单独构建镜像：
+
 ```dockerfile
 FROM node:20-alpine
 
 WORKDIR /app
+
+# 复制依赖文件
 COPY package.json pnpm-lock.yaml ./
+
+# 安装 pnpm 和依赖
 RUN npm install -g pnpm && pnpm install --frozen-lockfile
+
+# 复制源码
 COPY . .
+
+# 构建
 RUN pnpm build
 
+# 暴露端口（反向 WS）
 EXPOSE 3002
+
+# 启动命令
 CMD ["node", "dist/standalone.mjs"]
+```
+
+### 构建和运行
+
+```bash
+# 构建镜像
+docker build -t gsuid-adapter .
+
+# 运行容器
+docker run -d \
+  --name gsuid-adapter \
+  --restart always \
+  -p 3002:3002 \
+  -v $(pwd)/config.json:/app/config.json \
+  -v $(pwd)/logs:/app/logs \
+  --network gscore-network \
+  gsuid-adapter
+```
+
+### 配置文件
+
+**重要**：容器内需要配置文件才能运行。启动前请先复制并编辑：
+
+```bash
+cp config.example.json config.json
+# 编辑 config.json，填入 gscoreUrl、httpUrl、token 等
+```
+
+### 网络说明
+
+如果你的 SnowLuma/GScore 也在 Docker 中，建议让它们加入同一个网络：
+
+```bash
+# 创建网络（只需一次）
+docker network create gscore-network
+
+# 将 SnowLuma 加入网络
+docker network connect gscore-network snowluma
+
+# 将适配器加入网络
+docker network connect gscore-network gsuid-adapter
+```
+
+配置文件中可以使用容器名作为地址：
+
+```json
+{
+  "gscoreUrl": "ws://gscore-core:8765",
+  "httpUrl": "http://snowluma:3000"
+}
+```
+
+### 查看日志
+
+```bash
+# 查看容器日志
+docker logs -f gsuid-adapter
+
+# 进入容器查看日志文件
+docker exec -it gsuid-adapter sh
+cat logs/gsuid-adapter-$(date +%Y-%m-%d).log
 ```
 
 ## 📋 日志

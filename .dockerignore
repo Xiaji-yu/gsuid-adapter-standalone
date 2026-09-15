@@ -1,0 +1,42 @@
+# Dependencies
+node_modules
+pnpm-lock.yaml
+package-lock.json
+
+# Build output
+dist
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+logs
+*.log
+
+# Environment
+.env
+.env.*
+config.json
+
+# Git
+.git
+.gitignore
+
+# Documentation（不需要复制到镜像中）
+*.md
+CHANGELOG.md
+CONTRIBUTING.md
+
+# CI/CD
+.github
+.gitlab-ci.yml
+
+# TypeScript
+*.tsbuildinfo
