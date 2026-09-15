@@ -1,0 +1,57 @@
+{
+  "name": "gsuid-adapter-standalone",
+  "version": "1.3.5",
+  "type": "module",
+  "main": "dist/standalone.mjs",
+  "description": "GScore Adapter Standalone - 独立运行的 GScore 适配器，支持 NapCat/SnowLuma 等 OneBot 载体",
+  "author": "MortalCat <xiowo@example.com>",
+  "license": "MIT",
+  "keywords": [
+    "gsuid",
+    "gscore",
+    "adapter",
+    "onebot",
+    "napcat",
+    "snowluma",
+    "qq"
+  ],
+  "homepage": "https://github.com/Xiaji-yu/gsuid-adapter-standalone#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Xiaji-yu/gsuid-adapter-standalone.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Xiaji-yu/gsuid-adapter-standalone/issues"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "files": [
+    "dist/",
+    "LICENSE",
+    "README.md",
+    "config.example.json",
+    "config.example.commented.json"
+  ],
+  "dependencies": {
+    "ws": "^8.19.0"
+  },
+  "devDependencies": {
+    "@rollup/plugin-node-resolve": "^15.3.1",
+    "@types/node": "^20.19.33",
+    "@types/ws": "^8.18.1",
+    "typescript": "^5.9.3",
+    "vite": "^6.4.1"
+  },
+  "scripts": {
+    "build": "vite build",
+    "watch": "vite build --watch",
+    "dev": "vite build --watch",
+    "typecheck": "tsc --noEmit",
+    "start": "node dist/standalone.mjs",
+    "standalone": "node dist/standalone.mjs"
+  },
+  "bin": {
+    "gsuid-adapter": "dist/standalone.mjs"
+  }
+}

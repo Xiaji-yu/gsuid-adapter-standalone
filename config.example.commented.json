@@ -1,0 +1,113 @@
+{
+  // ============================================
+  // GScore 连接配置
+  // ============================================
+
+  // 全局开关：是否启用 GScore 消息转发
+  "gscoreEnable": true,
+
+  // 是否上报/转发机器人自身发送的消息
+  "forwardSelfMessage": false,
+
+  // GScore 服务 WebSocket 地址（格式：ws://host:port）
+  "gscoreUrl": "ws://127.0.0.1:8765",
+
+  // GScore 连接鉴权 Token（如果 GScore 服务端要求认证，在此填写）
+  "gscoreToken": "",
+
+  // 断线重连的时间间隔（毫秒）
+  "reconnectInterval": 5000,
+
+  // 最大重连次数，0 表示无限重连
+  "maxReconnectAttempts": 10,
+
+  // ============================================
+  // 消息与权限配置
+  // ============================================
+
+  // 群内管理指令的命令前缀（如 "#早柚"）
+  "commandPrefix": "#早柚",
+
+  // 主人 QQ 号（多个用英文逗号分隔），拥有管理指令权限
+  "masterQQ": "",
+
+  // 开启后，即使本群被禁用，主人消息仍会正常转发
+  "masterForwardWhenDisabled": false,
+
+  // 无权限用户执行管理指令时是否静默（不回复权限提示）
+  "silentNoPermission": false,
+
+  // 图片消息的 summary 外显文本（多个用英文逗号隔开，发送时随机选择一个）
+  "customImageSummary": "",
+
+  // ============================================
+  // 合并转发彩蛋配置
+  // ============================================
+
+  // 是否启用自定义合并转发信息（发送者 QQ 号和昵称）
+  "customForwardInfo": false,
+
+  // 自定义合并转发 QQ 号（留空则使用机器人自身 QQ）
+  "customForwardQQ": "",
+
+  // 自定义合并转发昵称（留空则使用机器人自身昵称）
+  "customForwardName": "",
+
+  // ============================================
+  // 黑名单配置
+  // ============================================
+
+  // 黑名单 QQ 号列表，拉黑后不转发该用户消息到 GScore
+  "blacklist": [],
+
+  // ============================================
+  // 群组配置
+  // ============================================
+
+  // 按群的单独配置（key 为群号字符串）
+  "groupConfigs": {},
+
+  // ============================================
+  // 扩展兼容配置
+  // ============================================
+
+  // 禁用多 bot 功能，开启后固定使用 "napcat" 作为 bot_id
+  "disableMultiBot": false,
+
+  // 是否开启私聊 file 消息转发（通过 get_private_file_url 获取链接）
+  "privateFileForwardEnabled": true,
+
+  // 是否开启私聊 JSON 文件转 base64 发送
+  "privateJsonBase64Enabled": false,
+
+  // 私聊 JSON 转 base64 的大小限制（KB），超出则不转发
+  "privateJsonBase64MaxKb": 1024,
+
+  // ============================================
+  // 独立运行：反向 WS 监听配置
+  // ============================================
+
+  // 反向 WS 监听地址（NapCat / SnowLuma 连接到此端口）
+  "listenHost": "0.0.0.0",
+
+  // 反向 WS 监听端口
+  "listenPort": 3002,
+
+  // 启用的协议适配器类型列表（支持 NapCat / SnowLuma / 标准 OneBot）
+  "adapterTypes": ["napcat", "snowluma", "generic-ob11"],
+
+  // 反向 WS 鉴权 Token（连接时需在 URL 中携带 ?token=xxx，留空表示不鉴权）
+  "wsToken": "",
+
+  // ============================================
+  // HTTP API 配置（推荐用于 SnowLuma 等暴露 HTTP 端口的载体）
+  // ============================================
+
+  // OneBot HTTP API 地址（如 http://172.24.0.2:3000）
+  // 配置后优先通过 HTTP 调用 send_msg/get_msg 等 API，无需依赖 WS 下发
+  "httpUrl": "",
+
+  // HTTP API 鉴权 Token（Bearer Token，对应 SnowLuma 的 token 配置）
+  // 留空时自动使用 wsToken 的值，无需重复填写（适用于 HTTP 和 WS 共用同一 Token 的场景）
+  "httpToken": ""
+}
