@@ -1,0 +1,25 @@
+services:
+  gsuid-adapter:
+    build: .
+    container_name: gsuid-adapter
+    restart: always
+    ports:
+      - "3002:3002"  # 反向 WS 监听端口
+    volumes:
+      - ./config.json:/app/config.json  # 配置文件
+      - ./logs:/app/logs                # 日志目录
+    environment:
+      - NODE_ENV=production
+    networks:
+      - gscore-network
+    # Linux 下如需连接宿主机上的 GScore，取消下面两行注释，
+    # 并将 config.json 中的地址改为 host.docker.internal
+    # extra_hosts:
+    #   - "host.docker.internal:host-gateway"
+
+networks:
+  # 默认由 compose 自动创建。
+  # 如需与已有的 GScore / SnowLuma 容器互通，将下一行改为 external: true，
+  # 并确保该网络已存在（docker network create gscore-network），
+  # 然后将目标容器接入：docker network connect gscore-network <容器名>
+  gscore-network:
