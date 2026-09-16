@@ -10,6 +10,7 @@
  *       如果 SnowLuma 有特殊字段或格式差异，请在此文件中补充解析逻辑。
  */
 
+import type WebSocket from 'ws';
 import type { ProtocolAdapter, ActionRequest, ActionResponse } from '../types/adapter';
 import type { MessageEnvelope, MetaEnvelope } from '../types/message-envelope';
 import type { PluginLogger } from '../types';

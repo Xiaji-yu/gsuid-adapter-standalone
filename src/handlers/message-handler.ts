@@ -10,7 +10,7 @@
  * 所有消息发送通过 ActionDispatcher 下发。
  */
 
-import type { OB11Message, OB11PostSendMsg } from 'napcat-types/napcat-onebot';
+import type { OB11Message, OB11PostSendMsg } from '../types/ob11';
 import type { MessageEnvelope } from '../types/message-envelope';
 import { pluginState } from '../core/state';
 import { ActionDispatcher } from '../action-dispatcher';
@@ -392,13 +392,8 @@ export async function handleMessage(_ctx: unknown, event: MessageEnvelope): Prom
             }
 
             case 'version': {
-                const userId = String(event.user_id);
-                const isAllowed = checkPermission(event) || userId === '169629556';
-                if (isAllowed) {
-                    await sendReply(_ctx, event, `🦊插件版本: ${getPluginVersion()}`);
-                } else if (!pluginState.config.silentNoPermission) {
-                    await sendReply(_ctx, event, getPermissionDeniedMessage(event));
-                }
+                if (await denyIfNoPermission(_ctx, event)) return;
+                await sendReply(_ctx, event, `🦊插件版本: ${getPluginVersion()}`);
                 break;
             }
 

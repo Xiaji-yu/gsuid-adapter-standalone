@@ -6,6 +6,7 @@
  * 无需关心底层是 NapCat 还是 SnowLuma。
  */
 
+import type WebSocket from 'ws';
 import type { MessageEnvelope, MetaEnvelope } from './message-envelope';
 
 /**

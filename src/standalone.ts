@@ -23,7 +23,6 @@ import { WsServer, NapCatAdapter, SnowLumaAdapter, GenericOB11Adapter } from './
 import type { MessageEnvelope, MetaEnvelope } from './types/message-envelope';
 import { ActionDispatcher } from './action-dispatcher';
 import { FileLogger } from './utils/file-logger';
-import { ActionDispatcher } from './action-dispatcher';
 
 // ==================== CLI 参数解析 ====================
 
@@ -131,18 +130,19 @@ async function main(): Promise<void> {
   let gscoreConnected = false;
 
   // 监听事件
-  wsServer.on('event', (event: MessageEnvelope | MetaEnvelope, carrier) => {
-    if ('message_id' in event) {
+  wsServer.on('event', (event: unknown, carrier) => {
+    const envelope = event as MessageEnvelope | MetaEnvelope;
+    if ('message_id' in envelope) {
       // 消息事件
-      handleIncomingMessage(event as MessageEnvelope, carrier);
+      handleIncomingMessage(envelope, carrier);
     } else {
       // Meta 事件
-      handleIncomingMetaEvent(event as MetaEnvelope, carrier);
+      handleIncomingMetaEvent(envelope, carrier);
     }
   });
 
   // 第一个 carrier 注册后，再连接 GScore
-  wsServer.on('carrier:registered', async (carrier) => {
+  wsServer.on('carrier:registered', async (_event, carrier) => {
     if (gscoreConnected) return;
     gscoreConnected = true;
 

@@ -3,8 +3,7 @@
  * 定义插件内部使用的接口和类型
  *
  * 注意：OneBot 相关类型（OB11Message, OB11PostSendMsg 等）
- * 以及插件框架类型（NapCatPluginContext, PluginModule 等）
- * 均来自 napcat-types 包，无需在此重复定义。
+ * 定义于 ./ob11（本地定义，见该文件头部注释）。
  */
 
 // ==================== 插件配置 ====================
@@ -50,12 +49,6 @@ export interface PluginConfig {
     masterForwardWhenDisabled?: boolean;
     /** 无权限时静默（不回复权限提示） */
     silentNoPermission?: boolean;
-    /** 彩蛋配置：是否启用自定义合并转发信息 */
-    customForwardInfo?: boolean;
-    /** 彩蛋配置：自定义合并转发 QQ 号（不填则使用机器人自身） */
-    customForwardQQ?: string;
-    /** 彩蛋配置：自定义合并转发昵称（不填则使用机器人自身） */
-    customForwardName?: string;
     /** 扩展兼容：禁用多 bot 功能，开启后固定使用 napcat 作为 bot_id */
     disableMultiBot?: boolean;
     /** 扩展兼容：是否开启私聊 file 消息转发（通过 get_private_file_url 获取链接） */
@@ -68,8 +61,8 @@ export interface PluginConfig {
     listenHost?: string;
     /** 反向 WS 监听端口（独立运行模式） */
     listenPort?: number;
-    /** 启用的协议适配器类型列表（独立运行模式） */
-    adapterTypes?: string[];
+    /** 反向 WS 鉴权 Token（连接时需在 URL 中携带 ?token=xxx） */
+    wsToken?: string;
     /** SnowLuma/NapCat 等 OneBot 载体暴露的 HTTP API 地址（如 http://172.24.0.2:3000） */
     httpUrl?: string;
     /** HTTP API 鉴权 Token（Bearer Token） */

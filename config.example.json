@@ -11,17 +11,13 @@
   "customImageSummary": "",
   "masterForwardWhenDisabled": false,
   "silentNoPermission": false,
-  "customForwardInfo": false,
-  "customForwardQQ": "",
-  "customForwardName": "",
   "disableMultiBot": false,
   "privateFileForwardEnabled": true,
   "privateJsonBase64Enabled": false,
   "privateJsonBase64MaxKb": 1024,
   "listenHost": "0.0.0.0",
   "listenPort": 3002,
-  "adapterTypes": ["napcat", "snowluma", "generic-ob11"],
   "wsToken": "",
-  "httpUrl": "127.0.0.1:8765",
-  "httpToken": "Flzx2qc@Ysyhl9t@"
+  "httpUrl": "",
+  "httpToken": ""
 }

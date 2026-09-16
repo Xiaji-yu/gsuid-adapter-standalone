@@ -19,6 +19,7 @@
  * }
  */
 
+import type WebSocket from 'ws';
 import type { ProtocolAdapter, ActionRequest, ActionResponse } from '../types/adapter';
 import type { MessageEnvelope, MetaEnvelope } from '../types/message-envelope';
 import type { PluginLogger } from '../types';

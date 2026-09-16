@@ -9,9 +9,8 @@
 
 import fs from 'fs';
 import path from 'path';
-import type { PluginLogger } from './types';
+import type { PluginLogger, PluginConfig, GroupConfig } from '../types';
 import { DEFAULT_CONFIG } from '../config';
-import type { PluginConfig, GroupConfig } from '../types';
 import { ActionDispatcher } from '../action-dispatcher';
 
 // ==================== 配置清洗工具 ====================
@@ -40,9 +39,6 @@ export function sanitizeConfig(raw: unknown): PluginConfig {
   if (typeof raw.customImageSummary === 'string') out.customImageSummary = raw.customImageSummary;
   if (typeof raw.masterForwardWhenDisabled === 'boolean') out.masterForwardWhenDisabled = raw.masterForwardWhenDisabled;
   if (typeof raw.silentNoPermission === 'boolean') out.silentNoPermission = raw.silentNoPermission;
-  if (typeof raw.customForwardInfo === 'boolean') out.customForwardInfo = raw.customForwardInfo;
-  if (typeof raw.customForwardQQ === 'string') out.customForwardQQ = raw.customForwardQQ;
-  if (typeof raw.customForwardName === 'string') out.customForwardName = raw.customForwardName;
   if (typeof raw.disableMultiBot === 'boolean') out.disableMultiBot = raw.disableMultiBot;
   if (typeof raw.privateFileForwardEnabled === 'boolean') out.privateFileForwardEnabled = raw.privateFileForwardEnabled;
   if (typeof raw.privateJsonBase64Enabled === 'boolean') out.privateJsonBase64Enabled = raw.privateJsonBase64Enabled;
@@ -51,7 +47,6 @@ export function sanitizeConfig(raw: unknown): PluginConfig {
   // 独立运行字段
   if (typeof raw.listenHost === 'string') out.listenHost = raw.listenHost;
   if (typeof raw.listenPort === 'number') out.listenPort = raw.listenPort;
-  if (Array.isArray(raw.adapterTypes)) out.adapterTypes = raw.adapterTypes;
   if (typeof raw.wsToken === 'string') out.wsToken = raw.wsToken;
   if (typeof raw.httpUrl === 'string') out.httpUrl = raw.httpUrl;
   if (typeof raw.httpToken === 'string') out.httpToken = raw.httpToken;

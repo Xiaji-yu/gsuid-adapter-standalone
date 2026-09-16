@@ -5,6 +5,7 @@
  * 如果无法确定上游 carrier 类型，回退到本适配器。
  */
 
+import type WebSocket from 'ws';
 import type { ProtocolAdapter, ActionRequest, ActionResponse } from '../types/adapter';
 import type { MessageEnvelope, MetaEnvelope } from '../types/message-envelope';
 import type { PluginLogger } from '../types';

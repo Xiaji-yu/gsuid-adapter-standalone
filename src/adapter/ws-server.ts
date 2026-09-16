@@ -9,7 +9,7 @@
 import WebSocket, { WebSocketServer } from 'ws';
 import type { ProtocolAdapter } from '../types/adapter';
 import type { MessageEnvelope, MetaEnvelope } from '../types/message-envelope';
-import type { BotCarrier } from '../types/bot-carrier';
+import type { ActionResponse, BotCarrier } from '../types/bot-carrier';
 import { BotRegistry } from '../bot-registry';
 import { ActionDispatcher } from '../action-dispatcher';
 import type { PluginLogger } from '../types';
@@ -198,7 +198,7 @@ export class WsServer {
         BotRegistry.getInstance().register(carrier);
         carrierCreated = true;
         this.options.logger.info(`[WS] Bot registered: ${selfId} (${adapterType})`);
-        this.emit('carrier:registered', carrier);
+        this.emit('carrier:registered', carrier, carrier);
       } catch {
         // 不是 JSON，继续等待
       }
@@ -212,7 +212,7 @@ export class WsServer {
     ws: WebSocket,
     action: string,
     params: Record<string, unknown>,
-    timeout: number
+    timeout?: number
   ): Promise<ActionResponse> {
     const adapter = Array.from(this.adapters.values()).find((a) => a.type === 'generic-ob11') || null;
     const request = { action, params, echo: undefined };
@@ -220,6 +220,8 @@ export class WsServer {
     const payload = adapter?.serializeActionRequest
       ? adapter.serializeActionRequest(request)
       : JSON.stringify(request);
+
+    const timeoutMs = timeout ?? 10000;
 
     return new Promise((resolve, reject) => {
       if (ws.readyState !== WebSocket.OPEN) {
@@ -229,7 +231,7 @@ export class WsServer {
 
       const timer = setTimeout(() => {
         reject(new Error(`Action timeout: ${action}`));
-      }, timeout);
+      }, timeoutMs);
 
       // 临时监听响应
       const onMessage = (data: WebSocket.RawData) => {

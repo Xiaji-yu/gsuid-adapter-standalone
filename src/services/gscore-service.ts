@@ -1,6 +1,6 @@
 
 import WebSocket from 'ws';
-import type { OB11Message, OB11PostSendMsg } from 'napcat-types/napcat-onebot';
+import type { OB11Message, OB11PostSendMsg } from '../types/ob11';
 import { pluginState } from '../core/state';
 import { ActionDispatcher } from '../action-dispatcher';
 
@@ -1135,33 +1135,12 @@ export class GScoreService {
               const ob11Segments = this.convertGsCoreToOB11([subMsg]);
 
               if (ob11Segments.length > 0) {
-                // 构造 node 节点
-                let userId = `3889929917`;
-                let nickname = `小助手`;
-
-                // 使用自定义配置
-                if (pluginState.config.customForwardInfo) {
-                  const customQQ = pluginState.config.customForwardQQ;
-                  const customName = pluginState.config.customForwardName;
-
-                  if (customQQ && customQQ.trim()) {
-                    userId = customQQ.trim();
-                  } else {
-                    userId = String(pluginState.selfId || '3889929917');
-                  }
-
-                  if (customName && customName.trim()) {
-                    nickname = customName.trim();
-                  } else {
-                    nickname = String(pluginState.selfNickname || '小助手');
-                  }
-                }
-
+                // 构造 node 节点（以机器人自身身份作为发送者）
                 result.push({
                   type: 'node',
                   data: {
-                    user_id: userId,
-                    nickname: nickname,
+                    user_id: String(pluginState.selfId || ''),
+                    nickname: String(pluginState.selfNickname || ''),
                     content: ob11Segments
                   }
                 });

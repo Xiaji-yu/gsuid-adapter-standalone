@@ -5,7 +5,8 @@
  * 单例模式，全局唯一。
  */
 
-import type { BotCarrier } from '../types/bot-carrier';
+import type WebSocket from 'ws';
+import type { BotCarrier } from './types/bot-carrier';
 
 export class BotRegistry {
   private static instance: BotRegistry;

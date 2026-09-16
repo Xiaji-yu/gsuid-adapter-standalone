@@ -6,8 +6,11 @@
  * 并在需要时将 ActionRequest 序列化为上游能识别的格式。
  */
 
+import type WebSocket from 'ws';
 import type { MessageEnvelope, MetaEnvelope } from './message-envelope';
 import type { ActionRequest, ActionResponse } from './bot-carrier';
+
+export type { ActionRequest, ActionResponse } from './bot-carrier';
 
 /**
  * 协议适配器接口
