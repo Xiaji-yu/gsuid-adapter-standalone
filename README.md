@@ -19,13 +19,11 @@
 
 ```bash
 # 克隆项目
-git clone <repository-url>
+git clone https://github.com/Xiaji-yu/gsuid-adapter-standalone.git
 cd gsuid-adapter-standalone
 
-# 安装依赖
+# 安装依赖（项目使用 pnpm）
 pnpm install
-# 或
-npm install
 ```
 
 ## 🚀 运行
@@ -64,18 +62,14 @@ cp config.example.json config.json
 | **forwardSelfMessage** | 上报/转发机器人自身消息 | `false` |
 | **silentNoPermission** | 无权限时静默（不回复权限提示） | `false` |
 | **customImageSummary** | 图片消息 summary 外显（多个用逗号隔开） | 空 |
-| **customForwardInfo** | 自定义合并转发信息 | `false` |
-| **customForwardQQ** | 自定义合并转发 QQ 号 | 空 |
-| **customForwardName** | 自定义合并转发昵称 | 空 |
 | **blacklist** | 黑名单 QQ 号列表 | `[]` |
-| **groupConfigs** | 按群配置（key 为群号） | `{}` |
+| **groupConfigs** | 按群配置（key 为群号）：`enabled` 缺省视为启用，显式设 `false` 才关闭；`forwardPrefix` 为该群转发前缀（留空转发全部消息） | `{}` |
 | **disableMultiBot** | 禁用多 bot，固定使用 `napcat` 作为 bot_id | `false` |
 | **privateFileForwardEnabled** | 是否开启私聊 file 消息转发 | `true` |
 | **privateJsonBase64Enabled** | 是否开启私聊 JSON 文件转 base64 | `false` |
 | **privateJsonBase64MaxKb** | 私聊 JSON 转 base64 大小限制（KB） | `1024` |
 | **listenHost** | 反向 WS 监听地址 | `0.0.0.0` |
 | **listenPort** | 反向 WS 监听端口 | `3002` |
-| **adapterTypes** | 启用的协议适配器类型 | `["napcat", "snowluma", "generic-ob11"]` |
 | **wsToken** | 反向 WS 鉴权 Token（连接时需携带 `?token=xxx`） | 空 |
 | **httpUrl** | OneBot HTTP API 地址（如 `http://172.24.0.2:3000`），配置后优先走 HTTP | 空 |
 | **httpToken** | HTTP API 鉴权 Token（Bearer Token）。**留空时自动使用 `wsToken`** | 空 |
@@ -157,110 +151,78 @@ connection:
 
 ## 🐳 Docker 部署
 
+项目根目录已内置 `Dockerfile` 和 `docker-compose.yml`，无需手动创建。
+
 ### 方式一：Docker Compose（推荐）
 
-在项目根目录创建 `docker-compose.yml`：
+```bash
+# 1. 准备配置文件（容器内 /app/config.json 通过 volume 挂载）
+cp config.example.json config.json
+# 编辑 config.json，填入 gscoreUrl、httpUrl、token 等
 
-```yaml
-version: '3.8'
+# 2. 构建并启动（首次会自动构建镜像）
+docker compose up -d --build
 
-services:
-  gsuid-adapter:
-    build: .
-    container_name: gsuid-adapter
-    restart: always
-    ports:
-      - "3002:3002"  # 反向 WS 监听端口
-    volumes:
-      - ./config.json:/app/config.json  # 配置文件
-      - ./logs:/app/logs                # 日志目录
-    environment:
-      - NODE_ENV=production
-    networks:
-      - gscore-network
-
-networks:
-  gscore-network:
-    external: true  # 如果已有网络，设为 external；否则删除这行让 compose 自动创建
+# 3. 查看日志
+docker logs -f gsuid-adapter
 ```
 
-### 方式二：Dockerfile
+`docker-compose.yml` 要点：
+- 映射端口 `3002`（反向 WS，NapCat / SnowLuma 等载体连接到此端口）
+- 挂载 `./config.json` → `/app/config.json`、`./logs` → `/app/logs`
+- 自动创建 `gscore-network` 网络（如需与已有容器互通，见下方「网络互通设置」）
 
-如果需要单独构建镜像：
+> **注意**：如果 `docker compose build` 报 `permission denied: ~/.docker/buildx/...`，
+> 说明 buildx 缓存目录属主不对，执行 `sudo chown -R $USER:$USER ~/.docker` 修复，
+> 或改用传统构建器：`DOCKER_BUILDKIT=0 docker compose up -d --build`。
 
-```dockerfile
-FROM node:20-alpine
-
-WORKDIR /app
-
-# 复制依赖文件
-COPY package.json pnpm-lock.yaml ./
-
-# 安装 pnpm 和依赖
-RUN npm install -g pnpm && pnpm install --frozen-lockfile
-
-# 复制源码
-COPY . .
-
-# 构建
-RUN pnpm build
-
-# 暴露端口（反向 WS）
-EXPOSE 3002
-
-# 启动命令
-CMD ["node", "dist/standalone.mjs"]
-```
-
-### 构建和运行
+### 方式二：Dockerfile（手动构建）
 
 ```bash
 # 构建镜像
 docker build -t gsuid-adapter .
 
-# 运行容器
+# 运行容器（Linux 下如需访问宿主机服务，加 --add-host=host.docker.internal:host-gateway）
 docker run -d \
   --name gsuid-adapter \
   --restart always \
   -p 3002:3002 \
   -v $(pwd)/config.json:/app/config.json \
   -v $(pwd)/logs:/app/logs \
-  --network gscore-network \
   gsuid-adapter
 ```
 
-### 配置文件
+Dockerfile 流程：`node:20-alpine` 安装 pnpm → `pnpm install --no-frozen-lockfile`（仓库未提交 lock 文件）→ `pnpm build` → `pnpm prune --prod` 仅保留运行时依赖（ws）。
 
-**重要**：容器内需要配置文件才能运行。启动前请先复制并编辑：
+### ⚠️ 容器网络地址说明（重要）
+
+**容器内的 `127.0.0.1` / `localhost` 指向容器自身，不是宿主机！**
+如果 GScore 跑在宿主机上而配置写的是 `ws://127.0.0.1:8765`，容器内会连接失败（ECONNREFUSED）。
+
+| 场景 | 配置写法 |
+| :--- | :--- |
+| GScore 在宿主机运行 | `ws://host.docker.internal:8765`，并取消 compose 中 `extra_hosts` 的注释（Linux 需 `host-gateway`）；或直接使用宿主机局域网 IP |
+| SnowLuma / GScore 在 Docker 中运行 | 将容器接入同一网络后用**容器名**寻址，如 `ws://gscore-core:8765`、`http://snowluma:1315` |
+
+### 网络互通设置
+
+如果 SnowLuma/GScore 也在 Docker 中运行，让它们与适配器加入同一网络：
 
 ```bash
-cp config.example.json config.json
-# 编辑 config.json，填入 gscoreUrl、httpUrl、token 等
-```
-
-### 网络说明
-
-如果你的 SnowLuma/GScore 也在 Docker 中，建议让它们加入同一个网络：
-
-```bash
-# 创建网络（只需一次）
-docker network create gscore-network
-
-# 将 SnowLuma 加入网络
+# compose 已自动创建 gscore-network，只需把其他容器接进来（容器需先启动）
 docker network connect gscore-network snowluma
-
-# 将适配器加入网络
-docker network connect gscore-network gsuid-adapter
 ```
 
-配置文件中可以使用容器名作为地址：
+然后将 `config.json` 中的地址改为容器名：
 
 ```json
 {
   "gscoreUrl": "ws://gscore-core:8765",
-  "httpUrl": "http://snowluma:3000"
+  "httpUrl": "http://snowluma:1315"
 }
 ```
+
+> 若想把适配器加入**已有的**外部网络，将 compose 中 `gscore-network:` 改为 `external: true`。
 
 ### 查看日志
 
@@ -279,9 +241,9 @@ cat logs/gsuid-adapter-$(date +%Y-%m-%d).log
 
 ```
 logs/
-├── gsuid-adapter-2024-09-15.log
-├── gsuid-adapter-2024-09-16.log
-└── gsuid-adapter-2024-09-17.log
+├── gsuid-adapter-2026-09-15.log
+├── gsuid-adapter-2026-09-16.log
+└── gsuid-adapter-2026-09-17.log
 ```
 
 - **滚动策略**：按日期滚动，每天一个文件
@@ -289,6 +251,14 @@ logs/
 - **控制台输出**：同时输出到 stdout/stderr
 
 ## 🐧 使用 systemctl 后台运行
+
+前置步骤：将项目部署到目标目录（如 `/opt/gsuid-adapter-standalone`）后，先完成安装、构建与配置：
+
+```bash
+cd /opt/gsuid-adapter-standalone
+pnpm install && pnpm build
+cp config.example.json config.json   # 编辑填入实际配置
+```
 
 ### 1. 创建服务文件
 
