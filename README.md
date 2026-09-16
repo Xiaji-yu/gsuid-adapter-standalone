@@ -158,7 +158,7 @@ connection:
 ```bash
 # 1. 准备配置文件（容器内 /app/config.json 通过 volume 挂载）
 cp config.example.json config.json
-# 编辑 config.json，填入 gscoreUrl、httpUrl、token 等
+# 编辑 config.json，填入 gscoreUrl、httpUrl、token 等（本地部署保持默认 127.0.0.1 即可）
 
 # 2. 构建并启动（首次会自动构建镜像）
 docker compose up -d --build
@@ -168,9 +168,9 @@ docker logs -f gsuid-adapter
 ```
 
 `docker-compose.yml` 要点：
-- 映射端口 `3002`（反向 WS，NapCat / SnowLuma 等载体连接到此端口）
+- **`network_mode: host`**：适配器容器共享宿主机网络，`127.0.0.1` 即宿主机本身——GScore、SnowLuma 等跑在宿主机时，`config.json` 保持默认的 `127.0.0.1` 地址即可连通
+- 反向 WS 直接监听宿主机 `3002` 端口（host 模式下不需要也不支持 `ports` 端口映射）
 - 挂载 `./config.json` → `/app/config.json`、`./logs` → `/app/logs`
-- 自动创建 `gscore-network` 网络（如需与已有容器互通，见下方「网络互通设置」）
 
 > **注意**：如果 `docker compose build` 报 `permission denied: ~/.docker/buildx/...`，
 > 说明 buildx 缓存目录属主不对，执行 `sudo chown -R $USER:$USER ~/.docker` 修复，
@@ -182,11 +182,11 @@ docker logs -f gsuid-adapter
 # 构建镜像
 docker build -t gsuid-adapter .
 
-# 运行容器（Linux 下如需访问宿主机服务，加 --add-host=host.docker.internal:host-gateway）
+# 运行容器（推荐 --network host，本地部署零配置直连宿主机服务）
 docker run -d \
   --name gsuid-adapter \
   --restart always \
-  -p 3002:3002 \
+  --network host \
   -v $(pwd)/config.json:/app/config.json \
   -v $(pwd)/logs:/app/logs \
   gsuid-adapter
@@ -194,32 +194,28 @@ docker run -d \
 
 Dockerfile 流程：`node:20-alpine` 安装 pnpm → `pnpm install --no-frozen-lockfile`（仓库未提交 lock 文件）→ `pnpm build` → `pnpm prune --prod` 仅保留运行时依赖（ws）。
 
-### ⚠️ 容器网络地址说明（重要）
+### ⚠️ 网络模式说明（重要）
 
-**容器内的 `127.0.0.1` / `localhost` 指向容器自身，不是宿主机！**
-如果 GScore 跑在宿主机上而配置写的是 `ws://127.0.0.1:8765`，容器内会连接失败（ECONNREFUSED）。
+**为什么默认使用 host 模式？** GsCore（早柚核心）的 WS 端点仅信任回环地址（`TRUSTED_IPS` 默认为 `127.0.0.1` / `::1` / `localhost`）：从非回环来源 IP（例如 Docker 网桥网关 `172.x.0.1`）发起的连接会在握手前被 `close(1008)` 拒绝，客户端表现为 **HTTP 403 连接错误**。桥接网络下容器访问宿主机上的 GScore 必然 403，因此本地部署统一采用 host 模式，让适配器以 `127.0.0.1` 身份直连。
 
-| 场景 | 配置写法 |
+| 部署场景 | 推荐做法 |
 | :--- | :--- |
-| GScore 在宿主机运行 | `ws://host.docker.internal:8765`，并取消 compose 中 `extra_hosts` 的注释（Linux 需 `host-gateway`）；或直接使用宿主机局域网 IP |
-| SnowLuma / GScore 在 Docker 中运行 | 将容器接入同一网络后用**容器名**寻址，如 `ws://gscore-core:8765`、`http://snowluma:1315` |
+| GScore / 载体都跑在宿主机（最常见） | 使用默认的 `network_mode: host`，`config.json` 保持 `127.0.0.1` |
+| GScore 运行在 Docker 容器中 | 适配器与该容器接入同一网络后用容器名寻址；同时在 GScore 配置 `WS_TOKEN`，并在适配器 `gscoreToken` 填入相同值（非回环连接必须通过 token 校验） |
+| GScore 在另一台机器 | `gscoreUrl` 指向对方地址，并在其 `WS_TOKEN` 与适配器 `gscoreToken` 配置相同 token |
 
-### 网络互通设置
+> **注意**：GsCore 对同一来源 IP 连续 5 次 token 校验失败会封禁 15 分钟，排查连接问题时不要短时间内反复暴力重连。
 
-如果 SnowLuma/GScore 也在 Docker 中运行，让它们与适配器加入同一网络：
+#### 桥接网络模式（可选）
+
+如需网络隔离，可将 compose 中 `network_mode: host` 改回桥接模式（删除 `network_mode: host`，恢复 `ports: - "3002:3002"` 与 `networks:` 段落）。此时：
+
+- 访问宿主机服务：使用 `host.docker.internal`（Linux 需在 compose 中自行添加 `extra_hosts: - "host.docker.internal:host-gateway"`，或 `docker run --add-host=host.docker.internal:host-gateway`）
+- 访问同网络的其他容器：直接用容器名寻址，如 `ws://gscore-core:8765`、`http://snowluma:1315`
 
 ```bash
-# compose 已自动创建 gscore-network，只需把其他容器接进来（容器需先启动）
+# 将已在运行的容器接入适配器网络（容器需先启动）
 docker network connect gscore-network snowluma
-```
-
-然后将 `config.json` 中的地址改为容器名：
-
-```json
-{
-  "gscoreUrl": "ws://gscore-core:8765",
-  "httpUrl": "http://snowluma:1315"
-}
 ```
 
 > 若想把适配器加入**已有的**外部网络，将 compose 中 `gscore-network:` 改为 `external: true`。
