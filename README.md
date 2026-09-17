@@ -76,6 +76,8 @@ cp config.example.json config.json
 
 > 带注释的配置示例见 `config.example.commented.json`。
 
+> **配置生效方式**：运行期通过指令产生的变更（如 `#早柚拉黑`、群开关等）会立即写回 `config.json`；手动编辑 `config.json` 后，重启进程即可生效（`docker restart gsuid-adapter` 或重启服务），运行中的进程不会覆盖你的手动修改。
+
 ## 🔌 载体配置
 
 ### NapCat

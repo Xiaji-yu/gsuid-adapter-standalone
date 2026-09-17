@@ -176,7 +176,10 @@ async function main(): Promise<void> {
     logger.info(`收到 ${signal}，正在关闭...`);
     gscoreService.disconnect();
     wsServer.stop();
-    state.updateConfig({ /* 保存最新状态 */ } as any);
+    // 注意：不要在这里 saveConfig()。所有运行时配置变更（黑名单、群开关、
+    // 上报开关等）在发生时均已立即持久化；关闭时再整份写回会用内存中的旧
+    // 配置覆盖用户在容器运行期间对 config.json 的手动修改（docker restart
+    // 的场景下尤其明显）。
     process.exit(0);
   };
 

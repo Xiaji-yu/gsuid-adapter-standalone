@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 移除损坏的 `napcat-types` 依赖（其发布源码含语法错误且缺上游依赖），改为在 `src/types/ob11.ts` 本地定义 OneBot v11 类型
 - 统一 WebSocket 类型为 `ws` 包类型，消除与 DOM 全局类型的冲突
 - 修复 Docker 部署下适配器无法连接宿主机 GScore 的问题（容器内 `127.0.0.1` 指向自身导致 ECONNREFUSED；且 GsCore 仅信任回环 IP，桥接网络源 IP 会被 403 拒绝）
+- 修复进程收到 SIGTERM（`docker stop` / `docker restart`）时关闭逻辑将内存旧配置整份写回 `config.json`、覆盖运行期间手动修改的问题（运行时配置变更本就即时持久化，关闭时无需再保存）
 
 ### Added
 - 新增 `Dockerfile`（此前仓库缺失，`docker compose up -d` 直接报 `no such file or directory`）
